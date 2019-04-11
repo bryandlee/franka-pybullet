@@ -1,56 +1,66 @@
 import pybullet as p
 
 class Panda:
-    def __init__(self, stepsize=1e-3):
+    def __init__(self, stepsize=1e-3, realtime=0):
         self.t = 0.0
         self.stepsize = stepsize
-        self.realtime = 0
+        self.realtime = realtime
 
         self.control_mode = "torque" 
-
-        self.dof = 7
-        self.joints = [0,1,2,3,4,5,6]
 
         self.position_control_gain_p = [0.01,0.01,0.01,0.01,0.01,0.01,0.01]
         self.position_control_gain_d = [1.0,1.0,1.0,1.0,1.0,1.0,1.0]
         self.max_torque = [100,100,100,100,100,100,100]
 
+        # connect pybullet
         p.connect(p.GUI)
         p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-        p.resetDebugVisualizerCamera(
-            cameraDistance=1.5, cameraYaw=30, cameraPitch=-20, cameraTargetPosition=[0, 0, 0.5])
+        p.resetDebugVisualizerCamera(cameraDistance=1.5, cameraYaw=30, cameraPitch=-20, cameraTargetPosition=[0, 0, 0.5])
 
-        self.reset()
-
-    def reset(self):
-        self.t = 0.0
-
-        # simulator
         p.resetSimulation()
-        p.setRealTimeSimulation(self.realtime)
         p.setTimeStep(self.stepsize)
+        p.setRealTimeSimulation(self.realtime)
         p.setGravity(0,0,-9.81)
 
-        # ground plane
-        p.createCollisionShape(p.GEOM_PLANE)
-        p.createMultiBody(0,0)
+        # load models
+        p.setAdditionalSearchPath("../models")
 
-        # panda robot
+        self.plane = p.loadURDF("plane/plane.urdf",
+                                useFixedBase=True)
+        p.changeDynamics(self.plane,-1,restitution=.95)
+
         self.robot = p.loadURDF("panda/panda.urdf",
                                 useFixedBase=True,
                                 flags=p.URDF_USE_SELF_COLLISION)
         
-        self.joint_min = []
-        self.joint_max = []
+        # robot parameters
+        self.dof = p.getNumJoints(self.robot)
+        print(self.dof)
+        if self.dof != 7:
+            raise Exception('wrong urdf file: number of joints is not 7')
+
+        self.joints = []
+        self.q_min = []
+        self.q_max = []
         self.target_pos = []
-        self.target_torque = [0,0,0,0,0,0,0]
+        self.target_torque = []
 
         for j in range(self.dof):
             joint_info = p.getJointInfo(self.robot, j)
-            self.joint_min.append(joint_info[8])
-            self.joint_max.append(joint_info[9])
-            self.target_pos.append((self.joint_min[j] + self.joint_max[j])/2.0)
-            
+            self.joints.append(j)
+            self.q_min.append(joint_info[8])
+            self.q_max.append(joint_info[9])
+            self.target_pos.append((self.q_min[j] + self.q_max[j])/2.0)
+            self.target_torque.append(0.)
+
+        self.reset()
+
+    def reset(self):
+        self.t = 0.0        
+        self.control_mode = "torque"
+        for j in range(self.dof):
+            self.target_pos[j] = (self.q_min[j] + self.q_max[j])/2.0
+            self.target_torque[j] = 0.
             p.resetJointState(self.robot,j,targetValue=self.target_pos[j])
 
         self.resetController()
@@ -98,3 +108,7 @@ class Panda:
         joint_vel = [x[1] for x in joint_states]
         return joint_pos, joint_vel 
 
+if __name__ == "__main__":
+    robot = Panda(realtime=1)
+    while True:
+        pass
