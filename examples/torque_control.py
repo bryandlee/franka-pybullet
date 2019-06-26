@@ -25,4 +25,5 @@ for i in range(int(duration/stepsize)):
     robot.setTargetTorques(target_torque)
     robot.step()
 
+
     time.sleep(robot.stepsize)

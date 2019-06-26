@@ -29,12 +29,19 @@ class Panda:
                                 useFixedBase=True)
         p.changeDynamics(self.plane,-1,restitution=.95)
 
+
+        # ball
+        ball = p.loadURDF("ball/ball.urdf")
+        p.changeDynamics(ball,-1,restitution=.95, linearDamping = 1e-2, angularDamping = 1e-2)
+        p.resetBasePositionAndOrientation(ball, [0,1,1], [0,0,0,1])
+
         self.robot = p.loadURDF("panda/panda.urdf",
                                 useFixedBase=True,
                                 flags=p.URDF_USE_SELF_COLLISION)
         
         # robot parameters
         self.dof = p.getNumJoints(self.robot)
+        print(self.dof)
         if self.dof != 7:
             raise Exception('wrong urdf file: number of joints is not 7')
 
@@ -72,7 +79,7 @@ class Panda:
         p.setJointMotorControlArray(bodyUniqueId=self.robot,
                                     jointIndices=self.joints,
                                     controlMode=p.VELOCITY_CONTROL,
-                                    forces=[0. for i in range(self.dof)])
+                                    forces=[0,0,0,0,0,0,0])
 
     def setControlMode(self, mode):
         if mode == "position":
