@@ -22,7 +22,8 @@ for i in range(int(duration/stepsize)):
         target_torque = [0 for i in range(robot.dof)]
 
     pos, vel = robot.getJointStates()
-    target_torque = [0,0,0,0,0,0,0]
+    acc = [0 for x in pos]
+    target_torque = robot.solveInverseDynamics(pos, vel, acc)
 
     robot.setTargetTorques(target_torque)
     robot.step()

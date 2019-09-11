@@ -34,7 +34,7 @@ class Panda:
                                 flags=p.URDF_USE_SELF_COLLISION)
         
         # robot parameters
-        self.dof = p.getNumJoints(self.robot)
+        self.dof = p.getNumJoints(self.robot) - 1 # Virtual fixed joint between the flange and last link
         if self.dof != 7:
             raise Exception('wrong urdf file: number of joints is not 7')
 
@@ -68,6 +68,7 @@ class Panda:
         self.t += self.stepsize
         p.stepSimulation()
 
+    # robot functions
     def resetController(self):
         p.setJointMotorControlArray(bodyUniqueId=self.robot,
                                     jointIndices=self.joints,
@@ -106,6 +107,13 @@ class Panda:
         joint_pos = [x[0] for x in joint_states]
         joint_vel = [x[1] for x in joint_states]
         return joint_pos, joint_vel 
+
+    def solveInverseDynamics(self, pos, vel, acc):
+        return list(p.calculateInverseDynamics(self.robot, pos, vel, acc))
+
+    def solveInverseKinematics(self, pos, ori):
+        return list(p.calculateInverseKinematics(self.robot, 7, pos, ori))
+
 
 if __name__ == "__main__":
     robot = Panda(realtime=1)
