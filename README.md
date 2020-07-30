@@ -1,3 +1,3 @@
 # PyBullet Franka Panda Simulator
-A simple implementation of Franka Panda simulator on PyBullet
+Franka Panda simulator and basic control examples on PyBullet
 
